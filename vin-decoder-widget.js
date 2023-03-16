@@ -1,0 +1,91 @@
+function createVinDecoderWidget() {
+    const widget = {};
+
+    widget.init = function () {
+        const button = document.querySelector('#scan-vin-button');
+        button.addEventListener('click', widget.scanVINButtonPressed);
+    };
+
+    widget.scanVINButtonPressed = function () {
+        const cameraViewController = document.createElement('input');
+        cameraViewController.type = 'file';
+        cameraViewController.accept = 'image/*';
+        cameraViewController.capture = 'camera';
+        cameraViewController.addEventListener('change', widget.didFinishPickingMediaWithInfo);
+        cameraViewController.click();
+    };
+
+    widget.didFinishPickingMediaWithInfo = function (event) {
+        const file = event.target.files[0];
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function () {
+                const image = new Image();
+                image.onload = function () {
+                    const vision = FirebaseMLVision.vision();
+                    const textRecognizer = vision.onDeviceTextRecognizer();
+                    const visionImage = FirebaseMLVisionImage.fromImage(image);
+                    textRecognizer.processImage(visionImage).then(result => {
+                        const vinNumber = widget.extractVINNumber(result.text);
+                        widget.decodeVINNumber(vinNumber);
+                    }).catch(error => {
+                        console.log('Error recognizing text:', error);
+                    });
+                };
+                image.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            console.log('No image selected');
+        }
+    };
+
+    widget.extractVINNumber = function (text) {
+        const vinPattern = /[A-HJ-NPR-Z\d]{17}/;
+        const match = text.match(vinPattern);
+        if (match) {
+            return match[0];
+        } else {
+            return null;
+        }
+    };
+
+    widget.decodeVINNumber = function (vinNumber) {
+        if (!vinNumber) {
+            console.log('No VIN number found');
+            return;
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.carmd.com/v3.0/decode');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', 'Basic c66918d63fa043e4afb3e8fa7bf37951');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+
+                const form = document.querySelector('#multi-point-vehicle-inspection-form');
+                const vinNumberField = form.querySelector('#input_1_1');
+                const yearField = form.querySelector('#input_1_2');
+                const makeField = form.querySelector('#input_1_3');
+                const modelField = form.querySelector('#input_1_4');
+                const trimField = form.querySelector('#input_1_5');
+
+                vinNumberField.value = response.data.vin;
+                yearField.value = response.data.year;
+                makeField.value = response.data.make;
+                modelField.value = response.data.model;
+                trimField.value = response.data.trim;
+            } else {
+                console.log('Error decoding VIN number');
+            }
+        };
+        xhr.send(JSON.stringify({ vin: vinNumber }));
+    };
+
+    return widget;
+}
+
+const vinDecoderWidget = createVinDecoderWidget();
+vinDecoderWidget.init();

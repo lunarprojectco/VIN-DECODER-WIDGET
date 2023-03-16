@@ -1,0 +1,56 @@
+/* Styles for VIN Decoder Widget */
+
+.vin-decoder-widget-container {
+    position: relative;
+    width: 640px;
+}
+
+#vin-decoder-widget-video,
+#vin-decoder-widget-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#vin-decoder-widget-scan-btn {
+    display: block;
+    margin: 20px auto;
+    font-size: 18px;
+    padding: 10px;
+}
+
+#vin-decoder-widget-results {
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+#vin-decoder-widget-results table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#vin-decoder-widget-results td {
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+
+#vin-decoder-widget-results th {
+    background-color: #eee;
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+
+#vin-decoder-widget-results th:first-child,
+#vin-decoder-widget-results td:first-child {
+    font-weight: bold;
+}
+
+#vin-decoder-widget-results td:last-child {
+    text-align: right;
+}
+
+#vin-decoder-widget-results .vin-decoder-widget-error {
+    color: red;
+}
